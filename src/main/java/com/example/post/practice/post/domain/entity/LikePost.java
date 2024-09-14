@@ -2,28 +2,28 @@ package com.example.post.practice.post.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Data
-public class Post {
+@NoArgsConstructor
+
+public class LikePost {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    // FK
+    private Long likeIndex;
+    private Long postId;
     private String memberId;
-    private String title;
-    private String content;
-    private String imageUrl;
-    private Long likeCount;
     private Boolean deletedAt;
-
     @PrePersist
     public void prePersist() {
-        if (likeCount == null) {
-            likeCount = 0L;
-        }
         if (deletedAt == null || !deletedAt) {
             deletedAt = false;
         }
+    }
+
+    public LikePost(Long postId, String memberId){
+        this.postId = postId;
+        this.memberId = memberId;
     }
 }

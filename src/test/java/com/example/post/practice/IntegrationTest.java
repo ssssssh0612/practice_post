@@ -14,7 +14,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 abstract public class IntegrationTest {
     @Autowired
     protected MockMvc mockMvc;
-    @Autowired protected ObjectMapper objectMapper;
+    @Autowired
+    protected ObjectMapper objectMapper;
 
     protected String obtainsAccessToken(String username, String password) throws Exception {
         return mockMvc.perform(post("/members/sign-in")

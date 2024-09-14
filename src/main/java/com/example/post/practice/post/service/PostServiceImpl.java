@@ -4,9 +4,11 @@ import com.example.post.practice.post.domain.dto.CreatePostDto;
 import com.example.post.practice.post.domain.dto.PostDto;
 import com.example.post.practice.post.domain.dto.PostSummaryDto;
 import com.example.post.practice.post.domain.dto.UpdatePostDto;
+import com.example.post.practice.post.domain.entity.LikePost;
 import com.example.post.practice.post.domain.entity.Post;
 import com.example.post.practice.post.domain.mapper.PostMapper;
 import com.example.post.practice.post.exception.PostNotFoundException;
+import com.example.post.practice.post.repository.LikePostRepository;
 import com.example.post.practice.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -29,6 +32,7 @@ public class PostServiceImpl implements PostService {
     private static final String UPLOAD_DIR = System.getProperty("user.home") + RELATIVE_PATH;
 
     private final PostRepository postRepository;
+    private final LikePostRepository likePostRepository;
     private final PostMapper postMapper;
 
     @Override
@@ -89,7 +93,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Page<PostSummaryDto> getAllPostSummaries(Pageable pageable) {
-        Page<Post> postPage = postRepository.findAllByDeletedAtTrue(pageable);
+        Page<Post> postPage = postRepository.findAllByDeletedAtFalse(pageable);
         List<Post> postListPage = postPage.getContent();
         List<PostSummaryDto> postSummaryDtoList = postMapper.toSummaryDtos(postListPage);
         return new PageImpl<>(postSummaryDtoList, pageable, postPage.getTotalElements());
@@ -102,11 +106,31 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public void likePlus(Long postId){
+    public void likePlusOrMinus(Long postId,String memberId){
         Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
-        post.setLikeCount(post.getLikeCount()+1);
-        postRepository.save(post);
+        if(likePostRepository.existsByPostIdAndMemberId(postId,memberId)){
+            LikePost likePost = likePostRepository.findByPostIdAndMemberId(postId,memberId);
+            // 존재한다면 해당 컬럼을 찾은 후, deletedAt 의 값으로 확인하기
+            if(likePost.getDeletedAt()){
+                likePost.setDeletedAt(Boolean.FALSE);
+                likePostRepository.save(likePost);
+                post.setLikeCount(post.getLikeCount() + 1);
+                postRepository.save(post);
+            }else{
+                likePost.setDeletedAt(Boolean.TRUE);
+                likePostRepository.save(likePost);
+                post.setLikeCount(post.getLikeCount() - 1);
+                postRepository.save(post);
+            }
+        }else{
+            // 존재하지 않는다면 좋아요를 처음 누르는 경우
+            LikePost likePost = new LikePost(postId,memberId);
+            likePostRepository.save(likePost);
+            post.setLikeCount(post.getLikeCount() + 1);
+            postRepository.save(post);
+        }
     }
+
 
     @Override
     public Long likeCount(Long postId){

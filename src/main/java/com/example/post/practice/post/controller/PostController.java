@@ -55,11 +55,12 @@ public class PostController {
         return ResponseEntity.ok(postService.createPost(filename, createPostDto, memberId));
     }
 
-    // 좋아요 누르기
+    // 좋아요 누르기, 취소하기
     @PostMapping("/{postId}/like")
     public ResponseEntity<Long> likePost(@PathVariable Long postId) {
-        postService.likePlus(postId);
-        return ResponseEntity.ok(postService.getPostCount());
+        String memberId = SecurityUtil.getCurrentUsername();
+        postService.likePlusOrMinus(postId, memberId);
+        return ResponseEntity.ok(postService.likeCount(postId));
     }
 
     // 게시물 수정하기
