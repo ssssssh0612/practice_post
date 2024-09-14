@@ -23,15 +23,6 @@ public class MemberController {
     public JwtToken signIn(@RequestBody SignInDto signInDto) {
         String username = signInDto.getUsername();
         String password = signInDto.getPassword();
-        JwtToken jwtToken = memberService.signIn(username, password);
-        System.out.println("로그인?");
-        log.info("request username = {}, password = {}", username, password);
-        log.info("jwtToken accessToken = {}, refreshToken = {}", jwtToken.getAccessToken(), jwtToken.getRefreshToken());
-        return jwtToken;
-    }
-
-    @PostMapping("/test")
-    public String test() {
-        return SecurityUtil.getCurrentUsername();
+        return memberService.signIn(username, password);
     }
 }

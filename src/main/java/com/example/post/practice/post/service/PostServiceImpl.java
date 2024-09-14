@@ -32,14 +32,14 @@ public class PostServiceImpl implements PostService {
     private final PostMapper postMapper;
 
     @Override
-    public Post createPost(String filename, CreatePostDto createPostDto, String memberId) {
+    public PostDto createPost(String filename, CreatePostDto createPostDto, String memberId) {
         Post post = new Post();
         post.setImageUrl(filename);
         post.setContent(createPostDto.getContent());
         post.setTitle(createPostDto.getTitle());
         post.setMemberId(memberId);
         postRepository.save(post);
-        return post;
+        return postMapper.toDto(post);
     }
     @Override
     public void updatePost(Long postId, UpdatePostDto updatePostDto) {
@@ -60,27 +60,25 @@ public class PostServiceImpl implements PostService {
         return postRepository.count();
     }
 
+    @Override
     public String saveImage(MultipartFile multipartFile) throws IOException {
         Path uploadPath = Paths.get(UPLOAD_DIR);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
         String fileName = String.valueOf(UUID.randomUUID());
-
         Path filePath = uploadPath.resolve(fileName + ".png");
-
         Files.copy(multipartFile.getInputStream(), filePath);
-
-        Path relativePath = Paths.get(RELATIVE_PATH); // 상대 경로 - DB에 저장되는 경로는 ~ 이후의 경로로 저장되게 하기 위함
-
+        Path relativePath = Paths.get(RELATIVE_PATH);
         return relativePath.resolve(fileName + ".png").toString();
     }
 
+    @Override
     public void updateImage(Long postId,MultipartFile multipartFile) throws IOException {
         Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
         String imageUrl = post.getImageUrl();
         String newImageUrl = saveImage(multipartFile);
-        Path imagePath = Paths.get(imageUrl);
+        Path imagePath = Paths.get(System.getProperty("user.home"),imageUrl);
         // 기존 이미지 삭제
         if (Files.exists(imagePath)) {
             Files.delete(imagePath);
@@ -97,14 +95,22 @@ public class PostServiceImpl implements PostService {
         return new PageImpl<>(postSummaryDtoList, pageable, postPage.getTotalElements());
     }
 
+    @Override
     public PostDto getPost(Long postId){
         Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
         return postMapper.toDto(post);
     }
 
+    @Override
     public void likePlus(Long postId){
         Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
         post.setLikeCount(post.getLikeCount()+1);
         postRepository.save(post);
+    }
+
+    @Override
+    public Long likeCount(Long postId){
+        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
+        return post.getLikeCount();
     }
 }
