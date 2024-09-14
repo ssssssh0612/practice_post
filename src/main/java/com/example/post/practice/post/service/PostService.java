@@ -21,6 +21,6 @@ public interface PostService {
     long getPostCount();
     String saveImage(MultipartFile multipartFile) throws IOException;
     void updateImage(Long postId,MultipartFile multipartFile) throws IOException;
-    void likePlus(Long postId);
+    void likePlusOrMinus(Long postId,String memberId);
     Long likeCount(Long postId);
 }
