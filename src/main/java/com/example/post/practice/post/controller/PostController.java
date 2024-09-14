@@ -5,24 +5,19 @@ import com.example.post.practice.post.domain.dto.CreatePostDto;
 import com.example.post.practice.post.domain.dto.PostDto;
 import com.example.post.practice.post.domain.dto.PostSummaryDto;
 import com.example.post.practice.post.domain.dto.UpdatePostDto;
-import com.example.post.practice.post.domain.entity.Post;
 import com.example.post.practice.post.exception.NotPermissionException;
 import com.example.post.practice.post.service.PostService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.lang.invoke.MutableCallSite;
 
 @Controller
 @RequiredArgsConstructor

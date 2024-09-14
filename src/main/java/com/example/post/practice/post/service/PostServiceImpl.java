@@ -55,7 +55,7 @@ public class PostServiceImpl implements PostService {
     @Override
     public void deletePost(Long postId) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
-        post.setDeletedAt(false);
+        post.setDeletedAt(true);
         postRepository.save(post);
     }
 
