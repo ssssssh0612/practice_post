@@ -1,7 +1,6 @@
-jwt:
-  secret: 64461f01e1af406da538b9c48d801ce59142452199ff112fb5404c8e7e98e3ff
-
 spring:
+  config:
+    import: optional:file:.env[.properties]
   datasource:
     hikari:
       jdbc-url: jdbc:h2:tcp://localhost/~/db/H2/postPracticedb/data;
@@ -20,8 +19,6 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
-  jwt:
-    secret: QW5pc1Byb2plY3RKd3RTZWNyZXRLZXk=
   servlet:
     multipart:
       enabled: true
@@ -33,3 +30,7 @@ logging:
         post:
           practice:
             member: info
+
+my:
+  jwt:
+    key: ${MY_JWT_KEY}

@@ -16,8 +16,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class MemberServiceImpl implements MemberService {
-    private final MemberRepository memberRepository;
-    private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;  // AuthenticationManager 주입
 
@@ -35,7 +33,6 @@ public class MemberServiceImpl implements MemberService {
 
         // JWT 토큰 생성
         // 3. 인증 정보를 기반으로 JWT 토큰 생성
-        JwtToken jwtToken = jwtTokenProvider.generateToken(authentication);
-        return jwtToken;
+        return jwtTokenProvider.generateToken(authentication);
     }
 }

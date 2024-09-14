@@ -3,6 +3,7 @@ package com.example.post.practice.jwt;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -11,7 +12,6 @@ import org.springframework.security.config.annotation.web.configurers.CsrfConfig
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.annotation.web.configurers.HttpBasicConfigurer;
@@ -33,16 +33,22 @@ public class SecurityConfig {
                 .sessionManagement((sessionManagement) ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                // 해당 API에 대해서는 모든 요청을 허가
                 .authorizeHttpRequests((authorizeRequests) ->
                         authorizeRequests
-                                .requestMatchers("/members/sign-in","/members/test").permitAll()
-                                .requestMatchers("/members/","/posts").hasRole("USER")
+                                .requestMatchers("/h2-console").permitAll()
+                                .requestMatchers(HttpMethod.POST,"/members/sign-in").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/posts").permitAll() // 게시물 전체조회
+                                .requestMatchers(HttpMethod.GET, "/posts/*").permitAll() // 게시물 단일조회
+                                .requestMatchers(HttpMethod.POST, "/posts").hasRole("USER") // 게시물 만들기
+                                .requestMatchers(HttpMethod.PATCH, "/posts/*").hasRole("USER") // 게시물 수정
+                                .requestMatchers(HttpMethod.DELETE, "/posts/*").hasRole("USER") // 게시물 삭제
+                                .requestMatchers(HttpMethod.POST, "/posts/*/like").hasRole("USER") // 좋아요 누르기
+                                .requestMatchers("/members/test").hasRole("USER")
                                 .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
-        // HttpSecurity 객체를 빌드한 후 바로 반환합니다.
+        // HttpSecurity 객체를 빌드한 후 바로 반환
         return httpSecurity.build();
     }
 

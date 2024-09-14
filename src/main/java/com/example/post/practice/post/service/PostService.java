@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.List;
 
 public interface PostService {
-    Post createPost(String filename, CreatePostDto createPostDto, String memberId);
+    PostDto createPost(String filename, CreatePostDto createPostDto, String memberId);
     void updatePost(Long postId, UpdatePostDto updatePostDto);
     void deletePost(Long postId);
     PostDto getPost(Long postId);
@@ -22,4 +22,5 @@ public interface PostService {
     String saveImage(MultipartFile multipartFile) throws IOException;
     void updateImage(Long postId,MultipartFile multipartFile) throws IOException;
     void likePlus(Long postId);
+    Long likeCount(Long postId);
 }
