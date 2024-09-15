@@ -34,3 +34,5 @@ logging:
 my:
   jwt:
     key: ${MY_JWT_KEY}
+  api:
+    key: ${MY_API_KEY}
