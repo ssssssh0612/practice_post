@@ -19,6 +19,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -49,13 +50,12 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public PostDto createPost(String filename, CreatePostDto createPostDto, String memberId) {
-        Post post = new Post();
-        //TODO set사용 없애기
-        post.setImageUrl(filename);
-        post.setContent(createPostDto.getContent());
-        post.setTitle(createPostDto.getTitle());
-        post.setMemberId(memberId);
-        //TODO set사용 없애기
+        Post post = Post.builder()
+                .imageUrl(filename)
+                .content(createPostDto.getContent())
+                .title(createPostDto.getTitle())
+                .memberId(memberId)
+                .build();
         postRepository.save(post);
         return postMapper.toDto(post);
     }
@@ -71,7 +71,7 @@ public class PostServiceImpl implements PostService {
     public void deletePost(Long postId) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
         //TODO set사용 없애기
-        post.setDeletedAt(true);
+        postRepository.markPostAsDeleted(postId);
         postRepository.save(post);
     }
 
