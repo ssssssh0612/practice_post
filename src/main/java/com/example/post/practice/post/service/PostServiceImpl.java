@@ -148,7 +148,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    //TODO set사용 없애기
+    //TODO set사용 없애기 동기화생각해보기
     public void likePlusOrMinus(Long postId, String memberId) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
         if (likePostRepository.existsByPostIdAndMemberId(postId, memberId)) {
