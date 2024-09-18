@@ -14,9 +14,4 @@ import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findAllByDeletedAtFalse(Pageable pageable);
-
-    @Modifying
-    @Transactional
-    @Query("UPDATE Post p SET p.deletedAt = true WHERE p.id = :postId")
-    void markPostAsDeleted(@Param("postId") Long postId);
 }

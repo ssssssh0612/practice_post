@@ -1,11 +1,14 @@
 package com.example.post.practice.post.domain.dto;
 
 import com.example.post.practice.post.domain.entity.Post;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PostDto {
     private Long id;
     private String memberId;
@@ -13,14 +16,14 @@ public class PostDto {
     private String content;
     private String imageUrl;
     private long likeCount;
-    public static Post toEntity(PostDto postDto) {
-        return Post.builder()
-                .id(postDto.getId())
-                .memberId(postDto.getMemberId())
-                .title(postDto.getTitle())
-                .content(postDto.getContent())
-                .imageUrl(postDto.getImageUrl())
-                .likeCount(postDto.getLikeCount())
-                .build();
+
+    @Builder
+    public PostDto(Long id, String memberId, String title, String content, String imageUrl, Long likeCount) {
+        this.id = id;
+        this.memberId = memberId;
+        this.title = title;
+        this.content = content;
+        this.imageUrl = imageUrl;
+        this.likeCount = likeCount;
     }
 }

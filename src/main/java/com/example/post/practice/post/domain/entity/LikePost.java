@@ -26,4 +26,12 @@ public class LikePost {
         this.postId = postId;
         this.memberId = memberId;
     }
+
+    public void deletedChecking(){
+        if(this.deletedAt){
+            this.deletedAt = false;
+        }else{
+            this.deletedAt = true;
+        }
+    }
 }
