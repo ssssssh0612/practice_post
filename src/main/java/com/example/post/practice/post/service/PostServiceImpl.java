@@ -1,29 +1,28 @@
 package com.example.post.practice.post.service;
 
 import com.example.post.practice.post.config.ImgurConfig;
-import com.example.post.practice.post.domain.dto.CreatePostDto;
+import com.example.post.practice.post.domain.dto.CreateOrUpdatePostDto;
 import com.example.post.practice.post.domain.dto.PostDto;
 import com.example.post.practice.post.domain.dto.PostSummaryDto;
-import com.example.post.practice.post.domain.dto.UpdatePostDto;
 import com.example.post.practice.post.domain.entity.LikePost;
 import com.example.post.practice.post.domain.entity.Post;
-import com.example.post.practice.post.domain.mapper.PostMapper;
 import com.example.post.practice.post.exception.PostNotFoundException;
 import com.example.post.practice.post.repository.LikePostRepository;
 import com.example.post.practice.post.repository.PostRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,25 +30,20 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 @RequiredArgsConstructor
+@Validated
 @Service
 public class PostServiceImpl implements PostService {
-    private static final String RELATIVE_PATH = "/db/post/";
-    private static final String UPLOAD_DIR = System.getProperty("user.home") + RELATIVE_PATH;
-
     @Value("${my.api.key}")
     private String clientId;
 
     private final PostRepository postRepository;
     private final LikePostRepository likePostRepository;
-    private final PostMapper postMapper;
 
     @Override
-    public PostDto createPost(String filename, CreatePostDto createPostDto, String memberId) {
+    public PostDto createPost(String filename, @Valid CreateOrUpdatePostDto createPostDto, String memberId) {
         Post post = Post.builder()
                 .imageUrl(filename)
                 .content(createPostDto.getContent())
@@ -57,21 +51,20 @@ public class PostServiceImpl implements PostService {
                 .memberId(memberId)
                 .build();
         postRepository.save(post);
-        return postMapper.toDto(post);
+        return post.toDto();
     }
 
     @Override
-    public void updatePost(Long postId, UpdatePostDto updatePostDto) {
+    public void updatePost(Long postId, @Valid CreateOrUpdatePostDto updatePostDto) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
-        postMapper.updateFromPostDto(updatePostDto, post);
+        post.updateFromDto(updatePostDto);
         postRepository.save(post);
     }
 
     @Override
     public void deletePost(Long postId) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
-        //TODO set사용 없애기
-        postRepository.markPostAsDeleted(postId);
+        post.deleteFromDto();
         postRepository.save(post);
     }
 
@@ -129,7 +122,7 @@ public class PostServiceImpl implements PostService {
         if (Files.exists(imagePath)) {
             Files.delete(imagePath);
         }
-        post.setImageUrl(newImageUrl);
+        post.updateImageUrl(newImageUrl);
         postRepository.save(post);
     }
 
@@ -137,14 +130,17 @@ public class PostServiceImpl implements PostService {
     public Page<PostSummaryDto> getAllPostSummaries(Pageable pageable) {
         Page<Post> postPage = postRepository.findAllByDeletedAtFalse(pageable);
         List<Post> postListPage = postPage.getContent();
-        List<PostSummaryDto> postSummaryDtoList = postMapper.toSummaryDtos(postListPage);
+        List<PostSummaryDto> postSummaryDtoList = new ArrayList<>();
+        for (Post post : postListPage) {
+            postSummaryDtoList.add(post.toPostSummaryDto());
+        }
         return new PageImpl<>(postSummaryDtoList, pageable, postPage.getTotalElements());
     }
 
     @Override
     public PostDto getPost(Long postId) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
-        return postMapper.toDto(post);
+        return post.toDto();
     }
 
     @Override
@@ -155,21 +151,21 @@ public class PostServiceImpl implements PostService {
             LikePost likePost = likePostRepository.findByPostIdAndMemberId(postId, memberId);
             // 존재한다면 해당 컬럼을 찾은 후, deletedAt 의 값으로 확인하기
             if (likePost.getDeletedAt()) {
-                likePost.setDeletedAt(Boolean.FALSE);
+                likePost.deletedChecking();
                 likePostRepository.save(likePost);
-                post.setLikeCount(post.getLikeCount() + 1);
+                post.plusLikeCount();
                 postRepository.save(post);
             } else {
-                likePost.setDeletedAt(Boolean.TRUE);
+                likePost.deletedChecking();
                 likePostRepository.save(likePost);
-                post.setLikeCount(post.getLikeCount() - 1);
+                post.plusLikeCount();
                 postRepository.save(post);
             }
         } else {
             // 존재하지 않는다면 좋아요를 처음 누르는 경우
             LikePost likePost = new LikePost(postId, memberId);
             likePostRepository.save(likePost);
-            post.setLikeCount(post.getLikeCount() + 1);
+            post.plusLikeCount();
             postRepository.save(post);
         }
     }

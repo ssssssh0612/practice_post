@@ -1,10 +1,9 @@
 package com.example.post.practice.post.controller;
 
 import com.example.post.practice.jwt.SecurityUtil;
-import com.example.post.practice.post.domain.dto.CreatePostDto;
 import com.example.post.practice.post.domain.dto.PostDto;
 import com.example.post.practice.post.domain.dto.PostSummaryDto;
-import com.example.post.practice.post.domain.dto.UpdatePostDto;
+import com.example.post.practice.post.domain.dto.CreateOrUpdatePostDto;
 import com.example.post.practice.post.exception.NotPermissionException;
 import com.example.post.practice.post.service.PostService;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +12,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,7 +41,7 @@ public class PostController {
 
     // 게시물 만들기
     @PostMapping
-    public ResponseEntity<PostDto> createPost(@RequestPart("createPostDto") CreatePostDto createPostDto,
+    public ResponseEntity<PostDto> createPost(@RequestPart("createPostDto") CreateOrUpdatePostDto createPostDto,
                                               @RequestPart(required = false) MultipartFile multipartFile) throws IOException {
         String memberId = SecurityUtil.getCurrentUsername();
         String filename = postService.saveImage(multipartFile);
@@ -60,7 +58,7 @@ public class PostController {
 
     // 게시물 수정하기
     @PatchMapping("/{postId}")
-    public ResponseEntity<PostDto> updatePost(@PathVariable Long postId, @RequestPart UpdatePostDto updatePostDto,
+    public ResponseEntity<PostDto> updatePost(@PathVariable Long postId, @RequestPart CreateOrUpdatePostDto createOrUpdatePostDto,
                                               @RequestPart(required = false) MultipartFile multipartFile) throws IOException {
         String userId = SecurityUtil.getCurrentUsername();
         PostDto postDto = postService.getPost(postId);
@@ -68,7 +66,7 @@ public class PostController {
             if (multipartFile != null) {
                 postService.updateImage(postId, multipartFile);
             }
-            postService.updatePost(postId, updatePostDto);
+            postService.updatePost(postId, createOrUpdatePostDto);
             return ResponseEntity.ok(postService.getPost(postId));
         } else {
             throw new NotPermissionException("수정할 권한이 없습니다.");
