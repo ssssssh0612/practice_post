@@ -1,5 +1,6 @@
 package com.example.post.practice.post.domain.entity;
 
+import com.example.post.practice.post.domain.dto.ImageDto;
 import com.example.post.practice.post.domain.dto.PostDto;
 import com.example.post.practice.post.domain.dto.PostSummaryDto;
 import com.example.post.practice.post.domain.dto.CreateOrUpdatePostDto;
@@ -24,13 +25,15 @@ public class Post {
     private String imageUrl;
     private Long likeCount;
     private Boolean deletedAt;
+    private String deleteHash;
 
     @Builder
-    public Post(String title, String content, String imageUrl, String memberId) {
+    public Post(String title, String content, String imageUrl, String memberId, String deleteHash) {
         this.title = title;
         this.content = content;
         this.imageUrl = imageUrl;
         this.memberId = memberId;
+        this.deleteHash = deleteHash;
     }
 
     public PostDto toDto() {
@@ -75,8 +78,9 @@ public class Post {
         this.likeCount++;
     }
 
-    public void updateImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void updateImageUrl(ImageDto imageDto) {
+        this.imageUrl = imageDto.getImgUrl();
+        this.deleteHash = imageDto.getDeleteHash();
     }
 
     @PrePersist

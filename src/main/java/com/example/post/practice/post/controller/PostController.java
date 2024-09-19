@@ -1,6 +1,7 @@
 package com.example.post.practice.post.controller;
 
 import com.example.post.practice.jwt.SecurityUtil;
+import com.example.post.practice.post.domain.dto.ImageDto;
 import com.example.post.practice.post.domain.dto.PostDto;
 import com.example.post.practice.post.domain.dto.PostSummaryDto;
 import com.example.post.practice.post.domain.dto.CreateOrUpdatePostDto;
@@ -44,8 +45,8 @@ public class PostController {
     public ResponseEntity<PostDto> createPost(@RequestPart("createPostDto") CreateOrUpdatePostDto createPostDto,
                                               @RequestPart(required = false) MultipartFile multipartFile) throws IOException {
         String memberId = SecurityUtil.getCurrentUsername();
-        String filename = postService.saveImage(multipartFile);
-        return ResponseEntity.ok(postService.createPost(filename, createPostDto, memberId));
+        ImageDto imageDto = postService.saveImage(multipartFile);
+        return ResponseEntity.ok(postService.createPost(imageDto, createPostDto, memberId));
     }
 
     // 좋아요 누르기, 취소하기
@@ -58,7 +59,7 @@ public class PostController {
 
     // 게시물 수정하기
     @PatchMapping("/{postId}")
-    public ResponseEntity<PostDto> updatePost(@PathVariable Long postId, @RequestPart CreateOrUpdatePostDto createOrUpdatePostDto,
+    public ResponseEntity<PostDto> updatePost(@PathVariable Long postId, @RequestPart CreateOrUpdatePostDto updatePostDto,
                                               @RequestPart(required = false) MultipartFile multipartFile) throws IOException {
         String userId = SecurityUtil.getCurrentUsername();
         PostDto postDto = postService.getPost(postId);
@@ -66,7 +67,7 @@ public class PostController {
             if (multipartFile != null) {
                 postService.updateImage(postId, multipartFile);
             }
-            postService.updatePost(postId, createOrUpdatePostDto);
+            postService.updatePost(postId, updatePostDto);
             return ResponseEntity.ok(postService.getPost(postId));
         } else {
             throw new NotPermissionException("수정할 권한이 없습니다.");

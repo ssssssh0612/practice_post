@@ -1,7 +1,6 @@
 package com.example.post.practice.member.controller;
 
 import com.example.post.practice.jwt.JwtToken;
-import com.example.post.practice.jwt.SecurityUtil;
 import com.example.post.practice.jwt.dto.SignInDto;
 import com.example.post.practice.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
