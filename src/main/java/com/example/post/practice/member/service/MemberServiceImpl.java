@@ -2,13 +2,11 @@ package com.example.post.practice.member.service;
 
 import com.example.post.practice.jwt.JwtToken;
 import com.example.post.practice.jwt.JwtTokenProvider;
-import com.example.post.practice.member.repository.MemberRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 

@@ -2,6 +2,7 @@ package com.example.post.practice.post.service;
 
 import com.example.post.practice.post.config.ImgurConfig;
 import com.example.post.practice.post.domain.dto.CreateOrUpdatePostDto;
+import com.example.post.practice.post.domain.dto.ImageDto;
 import com.example.post.practice.post.domain.dto.PostDto;
 import com.example.post.practice.post.domain.dto.PostSummaryDto;
 import com.example.post.practice.post.domain.entity.LikePost;
@@ -27,9 +28,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 @RequiredArgsConstructor
@@ -43,12 +41,13 @@ public class PostServiceImpl implements PostService {
     private final LikePostRepository likePostRepository;
 
     @Override
-    public PostDto createPost(String filename, @Valid CreateOrUpdatePostDto createPostDto, String memberId) {
+    public PostDto createPost(ImageDto imageDto, @Valid CreateOrUpdatePostDto createPostDto, String memberId) {
         Post post = Post.builder()
-                .imageUrl(filename)
+                .imageUrl(imageDto.getImgUrl())
                 .content(createPostDto.getContent())
                 .title(createPostDto.getTitle())
                 .memberId(memberId)
+                .deleteHash(imageDto.getDeleteHash())
                 .build();
         postRepository.save(post);
         return post.toDto();
@@ -62,9 +61,10 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public void deletePost(Long postId) {
+    public void deletePost(Long postId) throws IOException {
         Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
         post.deleteFromDto();
+        deleteImage(post.getDeleteHash());
         postRepository.save(post);
     }
 
@@ -75,8 +75,10 @@ public class PostServiceImpl implements PostService {
 
     //TODO Url로 받아와서 변환
     @Override
-    public String saveImage(MultipartFile multipartFile) throws IOException {
-        String imgurUrl = null;
+    public ImageDto saveImage(MultipartFile multipartFile) throws IOException {
+        // null이 좋을까 빈 문자열이 좋을까
+        String imgurUrl = "";
+        String deleteHash = "";
         try {
             String url = "https://api.imgur.com/3/image";
             HttpHeaders headers = new HttpHeaders();
@@ -100,14 +102,17 @@ public class PostServiceImpl implements PostService {
                 JsonNode jsonResponse = om.readTree(response.getBody());
                 JsonNode dataNode = jsonResponse.path("data");
                 imgurUrl = dataNode.path("link").asText();
+                deleteHash = dataNode.path("deletehash").asText();
             } else {
-                throw new RuntimeException("Failed to upload image: " + response.getStatusCode());
+                throw new RuntimeException("이미지 업로드에 실패했습니다" + response.getStatusCode());
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error occurred while uploading image", e);
+            throw new RuntimeException("이미지 업로드에 실패했습니다", e);
         }
-        return imgurUrl;
+        return ImageDto.builder()
+                .imgUrl(imgurUrl)
+                .deleteHash(deleteHash)
+                .build();
     }
 
 
@@ -115,16 +120,31 @@ public class PostServiceImpl implements PostService {
     @Override
     public void updateImage(Long postId, MultipartFile multipartFile) throws IOException {
         Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
-        String imageUrl = post.getImageUrl();
-        String newImageUrl = saveImage(multipartFile);
-        Path imagePath = Paths.get(System.getProperty("user.home"), imageUrl);
-        // 기존 이미지 삭제
-        if (Files.exists(imagePath)) {
-            Files.delete(imagePath);
-        }
-        post.updateImageUrl(newImageUrl);
+        // 이 전에 저장된 사진 삭제
+        deleteImage(post.getDeleteHash());
+        // 이미지를 저장해서 새로 받아옴
+        ImageDto imageDto = saveImage(multipartFile);
+        post.updateImageUrl(imageDto);
         postRepository.save(post);
     }
+
+    @Override
+    public void deleteImage(String deleteHash) throws IOException {
+        String url = "https://api.imgur.com/3/image/" + deleteHash;
+        // TODO set사용 없애기
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Client-ID " + clientId);
+        HttpEntity<String> requestEntity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = ImgurConfig.restTemplate();
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.DELETE, requestEntity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            System.out.println("이미지가 성공적으로 삭제되었습니다.");
+        } else {
+            throw new RuntimeException("이미지 삭제에 실패했습니다." + response.getStatusCode());
+        }
+    }
+
 
     @Override
     public Page<PostSummaryDto> getAllPostSummaries(Pageable pageable) {
@@ -144,7 +164,6 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    //TODO set사용 없애기 동기화생각해보기
     public void likePlusOrMinus(Long postId, String memberId) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
         if (likePostRepository.existsByPostIdAndMemberId(postId, memberId)) {
