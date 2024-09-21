@@ -76,7 +76,7 @@ public class PostController {
 
     // 게시물 삭제하기
     @DeleteMapping("/{postId}")
-    public ResponseEntity<String> deletePost(@PathVariable Long postId) {
+    public ResponseEntity<String> deletePost(@PathVariable Long postId) throws IOException{
         String userId = SecurityUtil.getCurrentUsername();
         PostDto postDto = postService.getPost(postId);
         if (userId.equals(postDto.getMemberId())) {
