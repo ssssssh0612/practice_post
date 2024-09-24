@@ -1,11 +1,11 @@
 package com.example.post.practice.post.domain.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Data
+@Getter
 @NoArgsConstructor
 
 public class LikePost {
@@ -15,6 +15,7 @@ public class LikePost {
     private Long postId;
     private String memberId;
     private Boolean deletedAt;
+
     @PrePersist
     public void prePersist() {
         if (deletedAt == null || !deletedAt) {
@@ -22,16 +23,16 @@ public class LikePost {
         }
     }
 
-    public LikePost(Long postId, String memberId){
+    public LikePost(Long postId, String memberId) {
         this.postId = postId;
         this.memberId = memberId;
     }
 
-    public void deletedChecking(){
-        if(this.deletedAt){
+    public void deletedChecking() {
+        if (this.deletedAt) {
             this.deletedAt = false;
-        }else{
-            this.deletedAt = true;
+            return;
         }
+        this.deletedAt = true;
     }
 }

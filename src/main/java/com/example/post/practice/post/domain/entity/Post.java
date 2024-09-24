@@ -1,19 +1,15 @@
 package com.example.post.practice.post.domain.entity;
 
-import com.example.post.practice.post.domain.dto.ImageDto;
 import com.example.post.practice.post.domain.dto.PostDto;
 import com.example.post.practice.post.domain.dto.PostSummaryDto;
-import com.example.post.practice.post.domain.dto.CreateOrUpdatePostDto;
+import com.example.post.practice.post.domain.dto.UpdatePostDto;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Data
+@Getter
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,15 +21,13 @@ public class Post {
     private String imageUrl;
     private Long likeCount;
     private Boolean deletedAt;
-    private String deleteHash;
 
     @Builder
-    public Post(String title, String content, String imageUrl, String memberId, String deleteHash) {
+    public Post(String title, String content, String imageUrl, String memberId) {
         this.title = title;
         this.content = content;
         this.imageUrl = imageUrl;
         this.memberId = memberId;
-        this.deleteHash = deleteHash;
     }
 
     public PostDto toDto() {
@@ -65,23 +59,23 @@ public class Post {
         }
     }
 
-    public void updateFromDto(CreateOrUpdatePostDto dto) {
+    public void updatePost(UpdatePostDto dto) {
         this.title = dto.getTitle();
         this.content = dto.getContent();
+        this.imageUrl = dto.getImageUrl();
     }
 
-    public void deleteFromDto(){
+    public void deletePost(){
         this.deletedAt = true;
     }
 
     public void plusLikeCount(){
         this.likeCount++;
     }
-
-    public void updateImageUrl(ImageDto imageDto) {
-        this.imageUrl = imageDto.getImgUrl();
-        this.deleteHash = imageDto.getDeleteHash();
+    public void minusLikeCount(){
+        this.likeCount--;
     }
+
 
     @PrePersist
     public void prePersist() {
