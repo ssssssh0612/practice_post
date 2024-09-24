@@ -1,12 +1,10 @@
 package com.example.post.practice.post.controller;
 
 import com.example.post.practice.jwt.SecurityUtil;
-import com.example.post.practice.post.domain.dto.ImageDto;
-import com.example.post.practice.post.domain.dto.PostDto;
-import com.example.post.practice.post.domain.dto.PostSummaryDto;
-import com.example.post.practice.post.domain.dto.CreateOrUpdatePostDto;
+import com.example.post.practice.post.domain.dto.*;
 import com.example.post.practice.post.exception.NotPermissionException;
 import com.example.post.practice.post.service.PostService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -42,11 +40,9 @@ public class PostController {
 
     // 게시물 만들기
     @PostMapping
-    public ResponseEntity<PostDto> createPost(@RequestPart("createPostDto") CreateOrUpdatePostDto createPostDto,
-                                              @RequestPart(required = false) MultipartFile multipartFile) throws IOException {
+    public ResponseEntity<PostDto> createPost(@RequestBody CreatePostDto createPostDto){
         String memberId = SecurityUtil.getCurrentUsername();
-        ImageDto imageDto = postService.saveImage(multipartFile);
-        return ResponseEntity.ok(postService.createPost(imageDto, createPostDto, memberId));
+        return ResponseEntity.ok(postService.createPost(createPostDto, memberId));
     }
 
     // 좋아요 누르기, 취소하기
@@ -59,19 +55,14 @@ public class PostController {
 
     // 게시물 수정하기
     @PatchMapping("/{postId}")
-    public ResponseEntity<PostDto> updatePost(@PathVariable Long postId, @RequestPart CreateOrUpdatePostDto updatePostDto,
-                                              @RequestPart(required = false) MultipartFile multipartFile) throws IOException {
+    public ResponseEntity<PostDto> updatePost(@PathVariable Long postId, @RequestBody UpdatePostDto updatePostDto){
         String userId = SecurityUtil.getCurrentUsername();
         PostDto postDto = postService.getPost(postId);
-        if (userId.equals(postDto.getMemberId())) {
-            if (multipartFile != null) {
-                postService.updateImage(postId, multipartFile);
-            }
-            postService.updatePost(postId, updatePostDto);
-            return ResponseEntity.ok(postService.getPost(postId));
-        } else {
+        if (!userId.equals(postDto.getMemberId())) {
             throw new NotPermissionException("수정할 권한이 없습니다.");
         }
+        postService.updatePost(postId, updatePostDto);
+        return ResponseEntity.ok(postService.getPost(postId));
     }
 
     // 게시물 삭제하기
@@ -79,11 +70,10 @@ public class PostController {
     public ResponseEntity<String> deletePost(@PathVariable Long postId) throws IOException{
         String userId = SecurityUtil.getCurrentUsername();
         PostDto postDto = postService.getPost(postId);
-        if (userId.equals(postDto.getMemberId())) {
-            postService.deletePost(postId);
-            return ResponseEntity.ok("게시물이 성공적으로 삭제되었습니다.");
-        } else {
+        if(!userId.equals(postDto.getMemberId())) {
             throw new NotPermissionException("삭제할 권한이 없습니다.");
         }
+        postService.deletePost(postId);
+        return ResponseEntity.ok("게시물이 성공적으로 삭제되었습니다.");
     }
 }
