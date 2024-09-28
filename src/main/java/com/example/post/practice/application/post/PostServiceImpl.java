@@ -84,7 +84,7 @@ public class PostServiceImpl implements PostService {
     @Transactional
     @Override
     public void likePlusOrMinus(Long postId, String memberId) {
-        Post post = postRepository.findByIdWithReadLock(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
+        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
         // 만약 존재한다면
         LikePost likePost = likePostRepository.findByPostIdAndMemberId(postId, memberId);
         if (likePost != null ) {
