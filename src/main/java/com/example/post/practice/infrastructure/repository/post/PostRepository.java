@@ -13,8 +13,4 @@ import java.util.Optional;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findAllByDeletedAtFalse(Pageable pageable);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT p FROM Post p WHERE p.id = :postId")
-    Optional<Post> findByIdWithReadLock(@Param("postId") Long postId);
 }
