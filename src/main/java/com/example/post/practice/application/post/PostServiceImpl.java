@@ -95,12 +95,6 @@ public class PostServiceImpl implements PostService {
         handleNewLikePost(postId, memberId, post);
     }
 
-    @Override
-    public Long likeCount(Long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
-        return post.getLikeCount();
-    }
-
     private void likePlusOrMinusPost(LikePost likePost, Post post) {
         likePost.deletedChecking();
         setPostLikeCount(post);
@@ -116,5 +110,11 @@ public class PostServiceImpl implements PostService {
         Long likeCount = likePostRepository.countByPostIdAndDeletedAtFalse(post.getId());
         post.plusLikeCount(likeCount);
         postRepository.save(post);
+    }
+    
+    @Override
+    public Long likeCount(Long postId) {
+        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
+        return post.getLikeCount();
     }
 }
