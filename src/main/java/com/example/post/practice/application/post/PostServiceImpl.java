@@ -1,12 +1,12 @@
 package com.example.post.practice.application.post;
 
+import com.example.post.practice.application.exception.InvalidUserIdException;
 import com.example.post.practice.domain.dto.post.CreatePostDto;
 import com.example.post.practice.domain.dto.post.PostDto;
 import com.example.post.practice.domain.dto.post.PostSummaryDto;
 import com.example.post.practice.domain.dto.post.UpdatePostDto;
 import com.example.post.practice.domain.entity.post.LikePost;
 import com.example.post.practice.domain.entity.post.Post;
-import com.example.post.practice.application.exception.NotPermissionException;
 import com.example.post.practice.domain.exception.PostNotFoundException;
 import com.example.post.practice.infrastructure.repository.post.LikePostRepository;
 import com.example.post.practice.infrastructure.repository.post.PostRepository;
@@ -45,17 +45,20 @@ public class PostServiceImpl implements PostService {
     @Transactional
     @Override
     public void updatePost(Long postId, String userId, UpdatePostDto updatePostDto) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
+        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("게시물을 찾을 수 없습니다."));
         if (!userId.equals(post.getMemberId())) {
-            throw new NotPermissionException("수정할 권한이 없습니다.");
+            throw new InvalidUserIdException("아이디가 유효하지 않습니다");
         }
         post.updatePost(updatePostDto);
     }
 
     @Transactional
     @Override
-    public void deletePost(Long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
+    public void deletePost(Long postId, String userId) {
+        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("게시물을 찾을 수 없습니다."));
+        if(!userId.equals(post.getMemberId())) {
+            throw new InvalidUserIdException("아이디가 유효하지 않습니다.");
+        }
         post.deletePost();
     }
 
@@ -77,14 +80,14 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public PostDto getPost(Long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
+        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("게시물을 찾을 수 없습니다."));
         return post.toDto();
     }
 
     @Transactional
     @Override
     public void likePlusOrMinus(Long postId, String memberId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
+        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("게시물을 찾을 수 없습니다."));
         // 만약 존재한다면
         LikePost likePost = likePostRepository.findByPostIdAndMemberId(postId, memberId);
         if (likePost != null ) {
@@ -114,7 +117,7 @@ public class PostServiceImpl implements PostService {
     
     @Override
     public Long likeCount(Long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
+        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("게시물을 찾을 수 없습니다."));
         return post.getLikeCount();
     }
 }
