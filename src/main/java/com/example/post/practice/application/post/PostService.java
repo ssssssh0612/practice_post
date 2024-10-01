@@ -12,10 +12,10 @@ import java.io.IOException;
 public interface PostService {
     PostDto createPost(CreatePostDto createPostDto, String memberId);
     void updatePost(Long postId, String userId, UpdatePostDto updatePostDto);
-    void deletePost(Long postId) throws IOException;
+    void deletePost(Long postId, String userId);
     PostDto getPost(Long postId);
     Page<PostSummaryDto> getAllPostSummaries(Pageable pageable);
     Long getPostCount();
-    void likePlusOrMinus(Long postId,String memberId);
-    Long likeCount(Long postId);
+    void togglePostLikeStatus(Long postId, String memberId);
+    Long getLikeCount(Long postId);
 }

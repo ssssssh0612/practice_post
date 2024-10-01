@@ -16,23 +16,13 @@ public class LikePost {
     private String memberId;
     private Boolean deletedAt;
 
-    @PrePersist
-    public void prePersist() {
-        if (deletedAt == null || !deletedAt) {
-            deletedAt = false;
-        }
-    }
-
     public LikePost(Long postId, String memberId) {
         this.postId = postId;
         this.memberId = memberId;
+        this.deletedAt = false;
     }
 
-    public void deletedChecking() {
-        if (this.deletedAt) {
-            this.deletedAt = false;
-            return;
-        }
-        this.deletedAt = true;
+    public void isDeletedToggle() {
+        this.deletedAt = !deletedAt;
     }
 }

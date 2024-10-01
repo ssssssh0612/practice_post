@@ -1,12 +1,12 @@
 package com.example.post.practice.application.post;
 
+import com.example.post.practice.application.exception.InvalidUserIdException;
 import com.example.post.practice.domain.dto.post.CreatePostDto;
 import com.example.post.practice.domain.dto.post.PostDto;
 import com.example.post.practice.domain.dto.post.PostSummaryDto;
 import com.example.post.practice.domain.dto.post.UpdatePostDto;
 import com.example.post.practice.domain.entity.post.LikePost;
 import com.example.post.practice.domain.entity.post.Post;
-import com.example.post.practice.application.exception.NotPermissionException;
 import com.example.post.practice.domain.exception.PostNotFoundException;
 import com.example.post.practice.infrastructure.repository.post.LikePostRepository;
 import com.example.post.practice.infrastructure.repository.post.PostRepository;
@@ -39,23 +39,26 @@ public class PostServiceImpl implements PostService {
                 .imageUrl(createPostDto.getImageUrl())
                 .build();
         postRepository.save(post);
-        return post.toDto();
+        return post.toCreatedto();
     }
 
     @Transactional
     @Override
     public void updatePost(Long postId, String userId, UpdatePostDto updatePostDto) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
+        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("게시물을 찾을 수 없습니다."));
         if (!userId.equals(post.getMemberId())) {
-            throw new NotPermissionException("수정할 권한이 없습니다.");
+            throw new InvalidUserIdException("아이디가 유효하지 않습니다");
         }
         post.updatePost(updatePostDto);
     }
 
     @Transactional
     @Override
-    public void deletePost(Long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
+    public void deletePost(Long postId, String userId) {
+        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("게시물을 찾을 수 없습니다."));
+        if(!userId.equals(post.getMemberId())) {
+            throw new InvalidUserIdException("아이디가 유효하지 않습니다.");
+        }
         post.deletePost();
     }
 
@@ -70,51 +73,35 @@ public class PostServiceImpl implements PostService {
         List<Post> postListPage = postPage.getContent();
         List<PostSummaryDto> postSummaryDtoList = new ArrayList<>();
         for (Post post : postListPage) {
-            postSummaryDtoList.add(post.toPostSummaryDto());
+            postSummaryDtoList.add(post.toPostSummaryDto(likePostRepository.countByPostIdAndDeletedAtFalse(post.getId())));
         }
         return new PageImpl<>(postSummaryDtoList, pageable, postPage.getTotalElements());
     }
 
     @Override
     public PostDto getPost(Long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
-        return post.toDto();
+        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("게시물을 찾을 수 없습니다."));
+        return post.toDto(getLikeCount(post.getId()));
     }
 
     @Transactional
     @Override
-    public void likePlusOrMinus(Long postId, String memberId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
+    public void togglePostLikeStatus(Long postId, String memberId) {
+        postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("게시물을 찾을 수 없습니다."));
         // 만약 존재한다면
         LikePost likePost = likePostRepository.findByPostIdAndMemberId(postId, memberId);
         if (likePost != null ) {
-            likePlusOrMinusPost(likePost, post);
+            likePost.isDeletedToggle();
             return;
         }
         // 존재하지 않는다면
-        handleNewLikePost(postId, memberId, post);
+        LikePost newLikePost = new LikePost(postId, memberId);
+        likePostRepository.save(newLikePost);
     }
 
+    // 좋아요 개수 반환하기
     @Override
-    public Long likeCount(Long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not Found"));
-        return post.getLikeCount();
-    }
-
-    private void likePlusOrMinusPost(LikePost likePost, Post post) {
-        likePost.deletedChecking();
-        setPostLikeCount(post);
-    }
-
-    private void handleNewLikePost(Long postId, String memberId, Post post) {
-        LikePost likePost = new LikePost(postId, memberId);
-        likePostRepository.save(likePost);
-        setPostLikeCount(post);
-    }
-
-    private void setPostLikeCount(Post post){
-        Long likeCount = likePostRepository.countByPostIdAndDeletedAtFalse(post.getId());
-        post.plusLikeCount(likeCount);
-        postRepository.save(post);
+    public Long getLikeCount(Long postId){
+        return likePostRepository.countByPostIdAndDeletedAtFalse(postId);
     }
 }
