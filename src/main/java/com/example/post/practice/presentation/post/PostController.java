@@ -52,8 +52,8 @@ public class PostController {
     @PostMapping("/{postId}/like")
     public ResponseEntity<Long> likePost(@PathVariable Long postId) {
         String memberId = SecurityUtil.getCurrentUsername();
-        postService.likePlusOrMinus(postId, memberId);
-        return ResponseEntity.ok(postService.likeCount(postId));
+        postService.togglePostLikeStatus(postId, memberId);
+        return ResponseEntity.ok(postService.getLikeCount(postId));
     }
 
     // 게시물 수정하기
@@ -66,7 +66,7 @@ public class PostController {
 
     // 게시물 삭제하기
     @DeleteMapping("/{postId}")
-    public ResponseEntity<String> deletePost(@PathVariable Long postId) throws IOException{
+    public ResponseEntity<String> deletePost(@PathVariable Long postId){
         String userId = SecurityUtil.getCurrentUsername();
         postService.deletePost(postId,userId);
         return ResponseEntity.ok("게시물이 성공적으로 삭제되었습니다.");

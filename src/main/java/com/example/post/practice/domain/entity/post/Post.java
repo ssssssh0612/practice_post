@@ -19,7 +19,6 @@ public class Post {
     private String title;
     private String content;
     private String imageUrl;
-    private Long likeCount;
     private Boolean deletedAt;
 
     @Builder
@@ -28,26 +27,37 @@ public class Post {
         this.content = content;
         this.imageUrl = imageUrl;
         this.memberId = memberId;
+        this.deletedAt = false;
     }
 
-    public PostDto toDto() {
+    public PostDto toCreatedto(){
         return PostDto.builder()
                 .id(this.id)
                 .memberId(this.memberId)
                 .title(this.title)
                 .content(this.content)
                 .imageUrl(this.imageUrl)
-                .likeCount(this.likeCount)
                 .build();
     }
 
-    public PostSummaryDto toPostSummaryDto() {
+    public PostDto toDto( Long likeCount ) {
+        return PostDto.builder()
+                .id(this.id)
+                .memberId(this.memberId)
+                .title(this.title)
+                .content(this.content)
+                .imageUrl(this.imageUrl)
+                .likeCount(likeCount)
+                .build();
+    }
+
+    public PostSummaryDto toPostSummaryDto( Long likeCount) {
         return PostSummaryDto.builder()
                 .id(this.getId())
                 .title(this.getTitle())
                 .content(sliceContent(this.getContent()))
                 .imageUrl(this.getImageUrl())
-                .likeCount(this.getLikeCount())
+                .likeCount(likeCount)
                 .build();
     }
 
@@ -67,19 +77,5 @@ public class Post {
 
     public void deletePost(){
         this.deletedAt = true;
-    }
-
-    public void plusLikeCount(Long likeCount){
-        this.likeCount = likeCount;
-    }
-
-    @PrePersist
-    public void prePersist() {
-        if (likeCount == null) {
-            likeCount = 0L;
-        }
-        if (deletedAt == null || !deletedAt) {
-            deletedAt = false;
-        }
     }
 }
