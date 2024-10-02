@@ -16,6 +16,6 @@ public interface PostService {
     PostDto getPost(Long postId);
     Page<PostSummaryDto> getAllPostSummaries(Pageable pageable);
     Long getPostCount();
-    void togglePostLikeStatus(Long postId, String memberId);
+    void toggleLikePostStatus(Long postId, String memberId);
     Long getLikeCount(Long postId);
 }
