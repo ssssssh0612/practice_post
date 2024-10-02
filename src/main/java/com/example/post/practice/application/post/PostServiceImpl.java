@@ -86,7 +86,7 @@ public class PostServiceImpl implements PostService {
 
     @Transactional
     @Override
-    public void togglePostLikeStatus(Long postId, String memberId) {
+    public void toggleLikePostStatus(Long postId, String memberId) {
         postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("게시물을 찾을 수 없습니다."));
         // 만약 존재한다면
         LikePost likePost = likePostRepository.findByPostIdAndMemberId(postId, memberId);
